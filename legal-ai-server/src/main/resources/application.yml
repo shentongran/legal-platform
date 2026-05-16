@@ -1,0 +1,12 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: legal-ai-server
+
+# DeepSeek AI 配置
+ai:
+  api-url: https://api.deepseek.com/v1/chat/completions
+  api-key: sk-b00a84810a724ee19aba5fc864396842
+  model: deepseek-chat
