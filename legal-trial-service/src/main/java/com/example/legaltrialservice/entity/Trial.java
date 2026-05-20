@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 public class Trial {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long caseId;         // 关联案件ID
-    private String court;        // 法院名称
-    private LocalDateTime trialTime; // 庭审时间
-    private String judge;         // 法官
-    private String status;        // 状态：未开庭/已开庭/已结束
-    private String result;        // 庭审结果
+    private Long caseId;          // 对应 case_id
+    private String court;        // 法院
+    private LocalDateTime trialTime; // 对应 trial_time
+    private String judge;        // 法官
+    private String status;       // 状态
+    private String result;       // 结果
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

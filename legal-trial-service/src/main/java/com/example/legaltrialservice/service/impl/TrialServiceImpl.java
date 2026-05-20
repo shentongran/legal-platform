@@ -1,49 +1,47 @@
 package com.example.legaltrialservice.service.impl;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.legaltrialservice.entity.Trial;
 import com.example.legaltrialservice.mapper.TrialMapper;
 import com.example.legaltrialservice.service.TrialService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class TrialServiceImpl extends ServiceImpl<TrialMapper, Trial> implements TrialService {
+public class TrialServiceImpl implements TrialService {
+
+    private final TrialMapper trialMapper;
+
+    public TrialServiceImpl(TrialMapper trialMapper) {
+        this.trialMapper = trialMapper;
+    }
+
+    @Override
+    public List<Trial> listAll() {
+        return trialMapper.selectListWithCaseName();
+    }
 
     @Override
     public List<Trial> listByCaseId(Long caseId) {
-        return lambdaQuery()
-                .eq(Trial::getCaseId, caseId)
-                .orderByDesc(Trial::getTrialTime)
-                .list();
+        return trialMapper.selectByCaseId(caseId);
     }
 
     @Override
-    public Trial getDetail(Long id) {
-        return getById(id);
+    public Trial getById(Long id) {
+        return trialMapper.selectById(id);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void addTrial(Trial trial) {
-        trial.setCreateTime(LocalDateTime.now());
-        trial.setUpdateTime(LocalDateTime.now());
-        save(trial);
+    public void add(Trial trial) {
+        trialMapper.insert(trial);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateTrial(Trial trial) {
-        trial.setUpdateTime(LocalDateTime.now());
-        updateById(trial);
+    public void update(Trial trial) {
+        trialMapper.updateById(trial);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void deleteTrial(Long id) {
-        removeById(id);
+    public void delete(Long id) {
+        trialMapper.deleteById(id);
     }
 }
