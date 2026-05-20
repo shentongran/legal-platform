@@ -13,6 +13,10 @@
         <module>legal-common</module>
         <module>legal-user-service</module>
         <module>legal-case-service</module>
+        <module>legal-file-service</module>
+        <module>legal-trial-service</module>
+        <module>legal-document-service</module>
+        <module>legal-ai-server</module>
     </modules>
 
     <parent>

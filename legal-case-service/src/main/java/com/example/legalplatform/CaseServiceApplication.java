@@ -2,7 +2,6 @@ package com.example.legalplatform;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 
 @SpringBootApplication(exclude = {
         org.springframework.cloud.autoconfigure.RefreshAutoConfiguration.class,

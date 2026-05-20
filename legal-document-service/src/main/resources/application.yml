@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: 8085
 
 spring:
   cloud:
@@ -8,9 +8,17 @@ spring:
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/legal_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3600/legal_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# 文件上传保存目录
+file:
+  upload-path: D:/legal_files/
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

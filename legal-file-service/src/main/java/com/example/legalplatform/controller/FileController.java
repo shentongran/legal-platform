@@ -1,7 +1,7 @@
 package com.example.legalplatform.controller;
 
 import com.example.legalplatform.entity.FileInfo;
-import com.example.legalplatform.entity.Result;
+import com.example.legalplatform.common.Result;
 import com.example.legalplatform.service.FileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;

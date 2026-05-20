@@ -1,8 +1,8 @@
 package com.example.legalplatform.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.legalplatform.entity.FileInfo;
 import com.example.legalplatform.mapper.FileMapper;
+import com.example.legalplatform.entity.FileInfo;
 import com.example.legalplatform.service.FileService;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
