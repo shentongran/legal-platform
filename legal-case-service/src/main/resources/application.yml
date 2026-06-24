@@ -2,9 +2,12 @@ server:
   port: 8084
 
 spring:
+  application:
+    name: legal-case-service
   cloud:
     nacos:
       discovery:
+        server-addr: 127.0.0.1:8848
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver

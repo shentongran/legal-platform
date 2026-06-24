@@ -1,27 +1,23 @@
 server:
-  port: 8085
+  port: 8082
 
 spring:
+  application:
+    name: legal-document-service
   cloud:
     nacos:
       discovery:
+        server-addr: 127.0.0.1:8848
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3600/legal_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/legal_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
-  servlet:
-    multipart:
-      max-file-size: 100MB
-      max-request-size: 100MB
-
-# 文件上传保存目录
-file:
-  upload-path: D:/legal_files/
 
 mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+file:
+  upload-path: ./uploads/documents

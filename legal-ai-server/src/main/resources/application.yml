@@ -4,9 +4,13 @@ server:
 spring:
   application:
     name: legal-ai-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: false
 
-# DeepSeek AI 配置
 ai:
   api-url: https://api.deepseek.com/v1/chat/completions
-  api-key: sk-b00a84810a724ee19aba5fc864396842
+  api-key: ${AI_API_KEY:sk-b00a84810a724ee19aba5fc864396842}
   model: deepseek-chat

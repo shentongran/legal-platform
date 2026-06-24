@@ -1,6 +1,8 @@
 package com.example.legalplatform.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.legalplatform.entity.CaseInfo;
 import com.example.legalplatform.mapper.CaseInfoMapper;
@@ -21,23 +23,44 @@ public class CaseInfoServiceImpl extends ServiceImpl<CaseInfoMapper, CaseInfo> i
         return list(wrapper);
     }
 
-    // 新增：根据 用户ID + 角色 过滤案件（权限核心）
     @Override
     public List<CaseInfo> listByUserIdAndRole(Long userId, String role) {
         LambdaQueryWrapper<CaseInfo> wrapper = new LambdaQueryWrapper<>();
-
-        // 管理员：不添加过滤条件，查询全部
         if (!"ADMIN".equals(role)) {
-            // 非管理员：只看自己的案件
-            // userId = null（游客）→ 返回空列表
             if (userId != null) {
                 wrapper.eq(CaseInfo::getUserId, userId);
             } else {
                 return List.of();
             }
         }
-
+        wrapper.orderByDesc(CaseInfo::getCreateTime);
         return list(wrapper);
+    }
+
+    @Override
+    public IPage<CaseInfo> pageList(Long current, Long size, Long userId, String role, String status, String keyword) {
+        LambdaQueryWrapper<CaseInfo> wrapper = new LambdaQueryWrapper<>();
+
+        if (!"ADMIN".equals(role)) {
+            if (userId != null) {
+                wrapper.eq(CaseInfo::getUserId, userId);
+            } else {
+                return new Page<>(current, size);
+            }
+        }
+
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(CaseInfo::getStatus, status);
+        }
+
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.and(w -> w.like(CaseInfo::getCaseName, keyword)
+                    .or().like(CaseInfo::getCaseNo, keyword)
+                    .or().like(CaseInfo::getPartyName, keyword));
+        }
+
+        wrapper.orderByDesc(CaseInfo::getCreateTime);
+        return page(new Page<>(current, size), wrapper);
     }
 
     @Override
@@ -49,11 +72,15 @@ public class CaseInfoServiceImpl extends ServiceImpl<CaseInfoMapper, CaseInfo> i
     public void addCase(CaseInfo caseInfo) {
         caseInfo.setCreateTime(new Date());
         caseInfo.setUpdateTime(new Date());
+        if (caseInfo.getStatus() == null || caseInfo.getStatus().isEmpty()) {
+            caseInfo.setStatus("PENDING");
+        }
         save(caseInfo);
     }
 
     @Override
     public void updateCase(CaseInfo caseInfo) {
+        caseInfo.setUpdateTime(new Date());
         updateById(caseInfo);
     }
 

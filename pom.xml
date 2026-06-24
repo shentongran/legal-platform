@@ -11,6 +11,7 @@
 
     <modules>
         <module>legal-common</module>
+        <module>legal-gateway</module>
         <module>legal-user-service</module>
         <module>legal-case-service</module>
         <module>legal-file-service</module>

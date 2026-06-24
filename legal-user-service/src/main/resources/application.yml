@@ -2,12 +2,19 @@ server:
   port: 8081
 
 spring:
+  application:
+    name: legal-user-service
   cloud:
     nacos:
       discovery:
+        server-addr: 127.0.0.1:8848
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/legal_platform?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true

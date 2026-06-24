@@ -1,0 +1,53 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: legal-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: legal-user-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/user/**
+        - id: legal-case-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/case/**
+        - id: legal-document-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/document/**
+        - id: legal-file-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/file/**
+        - id: legal-trial-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/trial/**
+        - id: legal-ai-server
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/ai/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600

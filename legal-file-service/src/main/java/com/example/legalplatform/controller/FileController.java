@@ -1,17 +1,19 @@
 package com.example.legalplatform.controller;
 
-import com.example.legalplatform.entity.FileInfo;
 import com.example.legalplatform.common.Result;
+import com.example.legalplatform.entity.FileInfo;
 import com.example.legalplatform.service.FileService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,28 +29,30 @@ public class FileController {
     @Value("${file.upload-path}")
     private String baseDir;
 
-    // 获取文件列表（带权限过滤）
     @GetMapping("/list")
     public Result<List<FileInfo>> list(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String role) {
 
-        // 管理员：查看全部
         if ("ADMIN".equals(role)) {
             return Result.success(fileService.list());
-        }
-        // 普通用户 / 法官 / 游客：只看自己的（游客userId为空，返回空）
-        else {
+        } else {
             return Result.success(fileService.listByUserId(userId));
         }
     }
 
-    // 文件上传
+    @GetMapping("/list/case/{caseId}")
+    public Result<List<FileInfo>> listByCaseId(@PathVariable Long caseId) {
+        return Result.success(fileService.listByCaseId(caseId));
+    }
+
     @PostMapping("/upload")
-    public Result<String> upload(
-            @RequestParam("caseName") String caseName,
-            @RequestParam("uploadUser") String uploadUser,
-            @RequestParam("file") MultipartFile file) throws Exception {
+    public Result<FileInfo> upload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) Long caseId,
+            @RequestParam(required = false) String caseName,
+            @RequestParam(required = false) Long uploadUserId,
+            @RequestParam(required = false) String uploadUser) throws Exception {
 
         File dir = new File(baseDir);
         if (!dir.exists()) {
@@ -56,8 +60,8 @@ public class FileController {
         }
 
         String originalFilename = file.getOriginalFilename();
-        String suffix = null;
-        if (originalFilename != null) {
+        String suffix = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
             suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
         String uuidName = UUID.randomUUID() + suffix;
@@ -66,97 +70,91 @@ public class FileController {
         file.transferTo(dest);
 
         FileInfo info = new FileInfo();
+        info.setCaseId(caseId);
         info.setCaseName(caseName);
         info.setFileName(originalFilename);
         info.setFilePath(uuidName);
-        if (suffix != null) {
-            info.setFileType(suffix.replace(".", ""));
-        }
+        info.setFileType(suffix.replace(".", ""));
+        info.setFileSize(file.getSize());
+        info.setUploadUserId(uploadUserId);
         info.setUploadUser(uploadUser);
         info.setCreateTime(LocalDateTime.now());
 
         fileService.save(info);
-        return Result.success("上传成功");
+        return Result.success(info);
     }
 
-    // 文件预览（PDF / 图片）
     @GetMapping("/preview/{id}")
-    public void preview(@PathVariable Long id, HttpServletResponse response) throws Exception {
+    public ResponseEntity<Resource> preview(@PathVariable Long id) {
         FileInfo info = fileService.getById(id);
         if (info == null) {
-            response.setStatus(404);
-            return;
+            return ResponseEntity.notFound().build();
         }
 
-        File file = new File(info.getFilePath());
-
+        File file = new File(baseDir + File.separator + info.getFilePath());
         if (!file.exists()) {
-            response.setStatus(404);
-            return;
+            return ResponseEntity.notFound().build();
         }
 
-        String type = info.getFileType().toLowerCase();
-        if (type.equals("pdf")) {
-            response.setContentType("application/pdf");
-        } else if (type.equals("png")) {
-            response.setContentType("image/png");
-        } else if (type.equals("jpg") || type.equals("jpeg")) {
-            response.setContentType("image/jpeg");
-        } else {
-            response.setContentType("application/octet-stream");
-        }
+        Resource resource = new FileSystemResource(file);
+        String contentType = info.getFileType() != null ? getContentType(info.getFileType()) : MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
-        try (FileInputStream fis = new FileInputStream(file);
-             OutputStream os = response.getOutputStream()) {
-            byte[] buffer = new byte[8192];
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                os.write(buffer, 0, len);
-            }
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, contentType)
+                .body(resource);
     }
 
-    // 文件下载
     @GetMapping("/download/{id}")
-    public void download(@PathVariable Long id, HttpServletResponse response) throws Exception {
+    public ResponseEntity<Resource> download(@PathVariable Long id) throws Exception {
         FileInfo info = fileService.getById(id);
         if (info == null) {
-            response.setStatus(404);
-            return;
+            return ResponseEntity.notFound().build();
         }
 
-        File file = new File(info.getFilePath());
-
+        File file = new File(baseDir + File.separator + info.getFilePath());
         if (!file.exists()) {
-            response.setStatus(404);
-            return;
+            return ResponseEntity.notFound().build();
         }
 
-        response.setHeader("Content-Disposition",
-                "attachment;filename*=UTF-8''" + URLEncoder.encode(info.getFileName(), "UTF-8"));
-        response.setContentType("application/octet-stream");
+        Resource resource = new FileSystemResource(file);
+        String encodedName = URLEncoder.encode(info.getFileName(), "UTF-8");
 
-        try (FileInputStream fis = new FileInputStream(file);
-             OutputStream os = response.getOutputStream()) {
-            byte[] buffer = new byte[8192];
-            int len;
-            while ((len = fis.read(buffer)) != -1) {
-                os.write(buffer, 0, len);
-            }
-        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=\"" + encodedName + "\"")
+                .body(resource);
     }
 
-    // 文件删除（数据库+磁盘）
-    @DeleteMapping("/delete/{id}")
-    public Result<String> delete(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
         FileInfo info = fileService.getById(id);
         if (info != null) {
-            File file = new File(info.getFilePath());
+            File file = new File(baseDir + File.separator + info.getFilePath());
             if (file.exists()) {
                 file.delete();
             }
             fileService.removeById(id);
         }
-        return Result.success("删除成功");
+        return Result.success();
+    }
+
+    private String getContentType(String fileType) {
+        String type = fileType.toLowerCase();
+        switch (type) {
+            case "pdf":
+                return "application/pdf";
+            case "png":
+                return "image/png";
+            case "jpg":
+            case "jpeg":
+                return "image/jpeg";
+            case "gif":
+                return "image/gif";
+            case "doc":
+            case "docx":
+                return "application/msword";
+            default:
+                return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
     }
 }

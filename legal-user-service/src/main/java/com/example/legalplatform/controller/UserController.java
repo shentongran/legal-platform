@@ -1,67 +1,68 @@
 package com.example.legalplatform.controller;
 
-import com.example.legalplatform.entity.User;
-import com.example.legalplatform.mapper.UserMapper;
 import com.example.legalplatform.common.Result;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.legalplatform.dto.LoginRequestDTO;
+import com.example.legalplatform.entity.User;
+import com.example.legalplatform.service.UserService;
+import com.example.legalplatform.vo.UserVO;
 import org.springframework.web.bind.annotation.*;
+import javax.annotation.Resource;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
-    @Autowired
-    private UserMapper userMapper;
+    @Resource
+    private UserService userService;
 
-    // 登录
     @PostMapping("/login")
-    public Result<User> login(@RequestBody User user) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, user.getUsername());
-        wrapper.eq(User::getPassword, user.getPassword());
-        User loginUser = userMapper.selectOne(wrapper);
-
-        if (loginUser == null) {
-            return Result.error(500, "用户名或密码错误");
+    public Result<UserVO> login(@RequestBody LoginRequestDTO request) {
+        UserVO userVO = userService.login(request.getUsername(), request.getPassword());
+        if (userVO == null) {
+            return Result.error("用户名或密码错误");
         }
-        return Result.success(loginUser);
+        return Result.success(userVO);
     }
 
-    // 注册
     @PostMapping("/register")
-    public Result<User> register(@RequestBody User user) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getUsername, user.getUsername());
-        User exist = userMapper.selectOne(wrapper);
-
-        if (exist != null) {
-            return Result.error(500, "用户名已存在");
+    public Result<Void> register(@RequestBody User user) {
+        if (user.getUsername() == null || user.getPassword() == null) {
+            return Result.error("用户名和密码不能为空");
         }
-
-        user.setRole("USER");
-        userMapper.insert(user);
-        return Result.success(user);
+        boolean success = userService.register(user.getUsername(), user.getPassword(), user.getRealName());
+        if (!success) {
+            return Result.error("用户名已存在");
+        }
+        return Result.success();
     }
 
-    // 获取个人信息
     @GetMapping("/profile")
-    public Result<User> profile(@RequestParam Integer userId) {
-        User user = userMapper.selectById(userId);
-        return Result.success(user);
+    public Result<UserVO> profile(@RequestParam Long userId) {
+        UserVO userVO = userService.getUserById(userId);
+        if (userVO == null) {
+            return Result.error("用户不存在");
+        }
+        return Result.success(userVO);
     }
 
-    // 修改信息
-    @PostMapping("/update")
-    public Result<User> update(@RequestBody User user) {
-        User oldUser = userMapper.selectById(user.getId());
-        if (oldUser == null) {
-            return Result.error(500, "用户不存在");
+    @PutMapping("/update")
+    public Result<Void> update(@RequestBody User user) {
+        if (user.getId() == null) {
+            return Result.error("用户ID不能为空");
         }
-        oldUser.setPhone(user.getPhone());
-        oldUser.setEmail(user.getEmail());
-        oldUser.setRealName(user.getRealName());
-        userMapper.updateById(oldUser);
-        return Result.success(oldUser);
+        boolean success = userService.updateProfile(user);
+        if (!success) {
+            return Result.error("用户不存在");
+        }
+        return Result.success();
+    }
+
+    @GetMapping("/{id}")
+    public Result<UserVO> getById(@PathVariable Long id) {
+        UserVO userVO = userService.getUserById(id);
+        if (userVO == null) {
+            return Result.error("用户不存在");
+        }
+        return Result.success(userVO);
     }
 }
